@@ -12,9 +12,10 @@ const getAiClient = (): GoogleGenAI => {
   if (!aiInstance) {
     const apiKey = process.env.API_KEY;
     if (!apiKey) {
-      console.error("API_KEY is missing. Please set it in your environment variables.");
+      // This error will now be caught by the UI and shown to the user
+      throw new Error("API key is missing. Please set the API_KEY environment variable in Vercel.");
     }
-    aiInstance = new GoogleGenAI({ apiKey: apiKey || '' });
+    aiInstance = new GoogleGenAI({ apiKey: apiKey });
   }
   return aiInstance;
 };

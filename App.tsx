@@ -286,12 +286,28 @@ const App: React.FC = () => {
         ));
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Gemini API Error:", error);
+      
+      // Extract specific error message
+      let errorMessageText = "I'm sorry, I encountered an error.";
+      
+      if (error.message) {
+        if (error.message.includes('API key')) {
+          errorMessageText = "Error: API Key is missing or invalid. Please check your Vercel environment variables.";
+        } else if (error.message.includes('403')) {
+          errorMessageText = "Error 403: Permission denied. Please check your API key quota or permissions.";
+        } else if (error.message.includes('429')) {
+          errorMessageText = "Error 429: Usage limit exceeded. Please try again later.";
+        } else {
+          errorMessageText = `Error: ${error.message}`;
+        }
+      }
+
       const errorMessage: Message = {
         id: Date.now().toString(),
         role: Role.MODEL,
-        content: "I'm sorry, I encountered an error. Please ensure your API key is valid and you are using a supported model.",
+        content: errorMessageText,
         timestamp: Date.now(),
         error: true,
       };
