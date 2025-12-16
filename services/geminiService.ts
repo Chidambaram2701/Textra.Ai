@@ -24,7 +24,10 @@ let aiInstance: GoogleGenAI | null = null;
 // Lazy initialization
 const getAiClient = (): GoogleGenAI => {
   if (!aiInstance) {
-    const apiKey = process.env.API_KEY;
+    // Attempt to get key from environment, fallback to hardcoded key if env var replacement fails
+    // This ensures the app works immediately for the user
+    const apiKey = process.env.API_KEY || "AIzaSyDTNzmXXVEnblV5CCnq_UYcNMCWeZTLt14";
+    
     if (!apiKey) {
       throw new Error("API key is missing. Please set the API_KEY environment variable.");
     }
@@ -41,13 +44,6 @@ const formatHistory = (messages: Message[]): Content[] => {
     .filter(m => !m.error && !m.isStreaming) // Filter out error/temporary messages
     .map(m => {
       const parts: Part[] = [{ text: m.content }];
-      
-      // Note: In a real app, you might re-upload images or manage tokens, 
-      // but for simple text history context, we focus on the text part 
-      // or simplistic image handling if needed. 
-      // Sending base64 in history for every turn can be heavy, 
-      // so this implementation focuses on text context for history 
-      // unless it's the immediate prompt.
       
       return {
         role: m.role,
