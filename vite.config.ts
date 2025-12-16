@@ -6,8 +6,12 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     define: {
-      // Specifically replace the API_KEY reference to avoid clobbering the global process object
-      'process.env.API_KEY': JSON.stringify(env.API_KEY || process.env.API_KEY || '')
+      // Replaces 'process.env' with a static object. 
+      // This prevents "ReferenceError: process is not defined" and safely injects the key.
+      'process.env': {
+        API_KEY: JSON.stringify(env.API_KEY || process.env.API_KEY || ''),
+        NODE_ENV: JSON.stringify(mode)
+      }
     }
   };
 });
