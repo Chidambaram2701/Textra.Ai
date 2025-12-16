@@ -358,18 +358,18 @@ const App: React.FC = () => {
   const selectedModelInfo = Object.values(MODELS).find(m => typeof m === 'object' && m.id === selectedModel) as typeof MODELS.FLASH_LITE;
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 overflow-hidden font-sans transition-colors duration-200">
+    <div className="flex h-[100dvh] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 overflow-hidden font-sans transition-colors duration-200">
       
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-gray-500/50 backdrop-blur-sm z-20 md:hidden"
+          className="fixed inset-0 bg-gray-500/50 backdrop-blur-sm z-30 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-30 w-[260px] bg-white dark:bg-gray-900 flex flex-col transition-transform duration-300 transform md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} border-r border-gray-200 dark:border-white/5`}>
+      <aside className={`fixed inset-y-0 left-0 z-40 w-[260px] bg-white dark:bg-gray-900 flex flex-col transition-transform duration-300 transform md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} border-r border-gray-200 dark:border-white/5`}>
         
         {/* New Chat Button */}
         <div className="p-3 mb-1">
@@ -476,7 +476,7 @@ const App: React.FC = () => {
       <main className="flex-1 flex flex-col relative h-full w-full bg-white dark:bg-gray-700">
         
         {/* Chat Header (Responsive) */}
-        <header className="sticky top-0 z-10 flex items-center justify-between p-3 border-b border-gray-200 dark:border-white/5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md text-gray-700 dark:text-gray-200 shadow-sm">
+        <header className="flex-shrink-0 relative z-20 flex items-center justify-between p-3 border-b border-gray-200 dark:border-white/5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md text-gray-700 dark:text-gray-200 shadow-sm">
             <div className="flex items-center gap-2 overflow-visible relative">
                 <button 
                   onClick={() => setSidebarOpen(true)} 

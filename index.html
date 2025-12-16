@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content" />
     <title>Textra AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -76,6 +76,14 @@
           -ms-overflow-style: none;
           scrollbar-width: none;
       }
+      /* Prevent mobile body scroll */
+      html, body {
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+        position: fixed;
+        touch-action: none;
+      }
     </style>
 <script type="importmap">
 {
@@ -92,8 +100,8 @@
 }
 </script>
 </head>
-  <body class="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-sans antialiased h-screen overflow-hidden selection:bg-primary-500/30">
-    <div id="root"></div>
+  <body class="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-sans antialiased h-full w-full overflow-hidden selection:bg-primary-500/30">
+    <div id="root" class="h-full w-full"></div>
     <script type="module" src="./index.tsx"></script>
   </body>
 </html>
