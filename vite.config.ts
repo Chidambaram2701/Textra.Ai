@@ -11,7 +11,8 @@ export default defineConfig(({ mode }) => {
     define: {
       // Replaces 'process.env' with a static object to prevent crashes.
       'process.env': {
-        API_KEY: JSON.stringify(env.API_KEY || process.env.API_KEY || ''),
+        // Prioritize actual environment variables, but fall back to the provided key if missing
+        API_KEY: JSON.stringify(env.API_KEY || process.env.API_KEY || 'AIzaSyDTNzmXXVEnblV5CCnq_UYcNMCWeZTLt14'),
         NODE_ENV: JSON.stringify(mode)
       }
     }
