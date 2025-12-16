@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Chat, GenerateContentResponse } from "@google/genai";
 import { Message, Role, ChatSession } from './types';
-import { createChatSession, generateImageEdit } from './services/geminiService';
+import { createChatSession, generateImageEdit, MODELS } from './services/geminiService';
 import MessageBubble from './components/MessageBubble';
 import InputArea from './components/InputArea';
-import { Sparkles, Menu, Plus, MessageSquare, Search, Trash2, X, Sun, Moon, Eraser, Copy, Check } from 'lucide-react';
+import { Sparkles, Menu, Plus, MessageSquare, Search, Trash2, X, Sun, Moon, Eraser, Copy, Check, ChevronDown, Zap, BrainCircuit } from 'lucide-react';
 
 // Helper to convert File to Base64
 const fileToBase64 = (file: File): Promise<string> => {
@@ -25,6 +25,10 @@ const App: React.FC = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [isChatCopied, setIsChatCopied] = useState(false);
+  
+  // Model Selection State
+  const [selectedModel, setSelectedModel] = useState<string>(MODELS.FLASH_LITE.id);
+  const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
   
   // Refs
   const chatSessionRef = useRef<Chat | null>(null);
@@ -81,6 +85,14 @@ const App: React.FC = () => {
   const currentSession = sessions.find(s => s.id === currentSessionId);
   const messages = currentSession?.messages || [];
 
+  // Update Chat Session Ref when Model or Session changes
+  useEffect(() => {
+    if (currentSessionId) {
+      // Re-initialize chat with current history and selected model
+      chatSessionRef.current = createChatSession(selectedModel, messages);
+    }
+  }, [currentSessionId, selectedModel]); 
+
   // Auto-scroll logic
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -88,6 +100,15 @@ const App: React.FC = () => {
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
+  const toggleModelMenu = () => {
+    setIsModelMenuOpen(!isModelMenuOpen);
+  };
+  
+  const handleModelSelect = (modelId: string) => {
+    setSelectedModel(modelId);
+    setIsModelMenuOpen(false);
   };
 
   // Create a new session
@@ -100,7 +121,6 @@ const App: React.FC = () => {
     };
     setSessions(prev => [newSession, ...prev]);
     setCurrentSessionId(newSession.id);
-    chatSessionRef.current = createChatSession();
     setSidebarOpen(false);
     setSearchQuery('');
   };
@@ -108,8 +128,6 @@ const App: React.FC = () => {
   // Switch session
   const switchSession = (sessionId: string) => {
     setCurrentSessionId(sessionId);
-    // Reset API context for simplicity when switching (or implement history re-hydration)
-    chatSessionRef.current = createChatSession();
     setSidebarOpen(false);
   };
 
@@ -138,9 +156,8 @@ const App: React.FC = () => {
         }
         return session;
       }));
-      
-      // Reset the AI chat context
-      chatSessionRef.current = createChatSession();
+      // Reset chat ref immediately to clear history context
+      chatSessionRef.current = createChatSession(selectedModel, []);
     }
   };
 
@@ -216,9 +233,9 @@ const App: React.FC = () => {
           : session
       ));
 
-      // Re-initialize chat ref if null (edge case)
+      // Re-initialize chat ref to ensure it has latest history before sending
       if (!chatSessionRef.current) {
-        chatSessionRef.current = createChatSession();
+          chatSessionRef.current = createChatSession(selectedModel, messages);
       }
 
       // Logic Branch: Image Edit vs Chat
@@ -257,7 +274,6 @@ const App: React.FC = () => {
         
         let fullContent = '';
         let lastUpdateTime = 0;
-        // Throttle updates to ~25fps (40ms) to keep UI buttery smooth
         const UPDATE_INTERVAL = 40; 
 
         for await (const chunk of resultStream) {
@@ -268,7 +284,6 @@ const App: React.FC = () => {
             fullContent += chunkText;
             const now = Date.now();
 
-            // Only update React state if enough time has passed
             if (now - lastUpdateTime >= UPDATE_INTERVAL) {
                setSessions(prev => prev.map(session => 
                  session.id === currentSessionId 
@@ -283,7 +298,7 @@ const App: React.FC = () => {
           }
         }
 
-        // Finalize Streaming State (Guaranteed final update)
+        // Finalize Streaming State
         setSessions(prev => prev.map(session => 
           session.id === currentSessionId 
             ? { 
@@ -297,14 +312,15 @@ const App: React.FC = () => {
     } catch (error: any) {
       console.error("Gemini API Error:", error);
       
-      // Extract specific error message
       let errorMessageText = "I'm sorry, I encountered an error.";
       
       if (error.message) {
         if (error.message.includes('API key')) {
-          errorMessageText = "Error: API Key is missing or invalid. Please check your Vercel environment variables.";
+          errorMessageText = "Error: API Key is missing or invalid.";
         } else if (error.message.includes('403')) {
-          errorMessageText = "Error 403: Permission denied. Please check your API key quota or permissions.";
+          errorMessageText = "Error 403: Permission denied. Please check your permissions.";
+        } else if (error.message.includes('404')) {
+          errorMessageText = `Error 404: The selected model (${selectedModel}) was not found. It might not be available in your region yet.`;
         } else if (error.message.includes('429')) {
           errorMessageText = "Error 429: Usage limit exceeded. Please try again later.";
         } else {
@@ -331,13 +347,15 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentSessionId]);
+  }, [currentSessionId, selectedModel, messages]);
 
   // Filter sessions based on search
   const filteredSessions = sessions.filter(session => 
     session.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     session.messages.some(m => m.content.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  const selectedModelInfo = Object.values(MODELS).find(m => typeof m === 'object' && m.id === selectedModel) as typeof MODELS.FLASH_LITE;
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 overflow-hidden font-sans transition-colors duration-200">
@@ -417,7 +435,6 @@ const App: React.FC = () => {
                             <span className="truncate flex-1 relative z-10 pr-6">
                             {session.title || "New conversation"}
                             </span>
-                            {/* Fade effect for text overflow */}
                             <div className={`absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l to-transparent group-hover:from-gray-100 dark:group-hover:from-[#2A2B32] ${currentSessionId === session.id ? 'from-gray-200 dark:from-[#343541]' : 'from-white dark:from-gray-900'}`} />
                         </button>
                         
@@ -460,20 +477,97 @@ const App: React.FC = () => {
         
         {/* Chat Header (Responsive) */}
         <header className="sticky top-0 z-10 flex items-center justify-between p-3 border-b border-gray-200 dark:border-white/5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md text-gray-700 dark:text-gray-200 shadow-sm">
-            <div className="flex items-center gap-2 overflow-hidden">
+            <div className="flex items-center gap-2 overflow-visible relative">
                 <button 
                   onClick={() => setSidebarOpen(true)} 
                   className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md md:hidden flex-shrink-0"
                 >
                     <Menu className="w-5 h-5" />
                 </button>
-                <div className="flex flex-col overflow-hidden">
-                    <span className="font-semibold text-sm truncate max-w-[180px] md:max-w-md">
-                        {currentSession?.title || "Textra AI"}
-                    </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400 hidden md:block">
-                        Gemini 2.5 Flash
-                    </span>
+                
+                {/* Model Selector Dropdown */}
+                <div className="relative">
+                  <div 
+                     className="flex flex-col cursor-pointer group"
+                     onClick={toggleModelMenu}
+                  >
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm truncate max-w-[150px] md:max-w-md select-none">
+                            {currentSession?.title || "Textra AI"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 group-hover:text-gray-800 dark:group-hover:text-gray-200 transition-colors">
+                          <span className="text-xs hidden md:flex items-center gap-1.5">
+                              {selectedModelInfo?.name} 
+                              <span className="opacity-50">•</span> 
+                              {selectedModelInfo?.description}
+                          </span>
+                          {/* Mobile Short Label */}
+                          <span className="text-xs md:hidden">
+                            {selectedModel === MODELS.FLASH_LITE.id ? 'Lite' : 'Pro'}
+                          </span>
+                          <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isModelMenuOpen ? 'rotate-180' : ''}`} />
+                      </div>
+                  </div>
+
+                  {/* Dropdown Menu */}
+                  {isModelMenuOpen && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-10" 
+                        onClick={() => setIsModelMenuOpen(false)} 
+                      />
+                      <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg shadow-xl z-20 overflow-hidden animate-fade-in-up">
+                        <div className="p-1.5 space-y-0.5">
+                           {/* Flash Option */}
+                           <button
+                             onClick={() => handleModelSelect(MODELS.FLASH_LITE.id)}
+                             className={`w-full text-left p-3 rounded-md flex items-start gap-3 transition-colors ${
+                               selectedModel === MODELS.FLASH_LITE.id 
+                                 ? 'bg-gray-100 dark:bg-white/10' 
+                                 : 'hover:bg-gray-50 dark:hover:bg-white/5'
+                             }`}
+                           >
+                              <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-md text-emerald-600 dark:text-emerald-400">
+                                <Zap className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <div className="font-medium text-sm text-gray-900 dark:text-gray-100">
+                                  {MODELS.FLASH_LITE.name}
+                                </div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  {MODELS.FLASH_LITE.description}
+                                </div>
+                              </div>
+                              {selectedModel === MODELS.FLASH_LITE.id && <Check className="w-4 h-4 text-emerald-500 ml-auto mt-1" />}
+                           </button>
+
+                           {/* Pro Option */}
+                           <button
+                             onClick={() => handleModelSelect(MODELS.PRO.id)}
+                             className={`w-full text-left p-3 rounded-md flex items-start gap-3 transition-colors ${
+                               selectedModel === MODELS.PRO.id 
+                                 ? 'bg-gray-100 dark:bg-white/10' 
+                                 : 'hover:bg-gray-50 dark:hover:bg-white/5'
+                             }`}
+                           >
+                              <div className="p-2 bg-indigo-100 dark:bg-indigo-500/20 rounded-md text-indigo-600 dark:text-indigo-400">
+                                <BrainCircuit className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <div className="font-medium text-sm text-gray-900 dark:text-gray-100">
+                                  {MODELS.PRO.name}
+                                </div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  {MODELS.PRO.description}
+                                </div>
+                              </div>
+                              {selectedModel === MODELS.PRO.id && <Check className="w-4 h-4 text-indigo-500 ml-auto mt-1" />}
+                           </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
             </div>
             
@@ -512,10 +606,15 @@ const App: React.FC = () => {
         <div className="flex-1 overflow-y-auto scroll-smooth pb-32 scrollbar-hide">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center p-8">
-               <div className="bg-gray-100 dark:bg-white/5 p-4 rounded-full mb-6">
-                 <Sparkles className="w-8 h-8 text-primary-500" />
+               <div className={`p-4 rounded-full mb-6 transition-colors duration-500 ${selectedModel === MODELS.PRO.id ? 'bg-indigo-100 dark:bg-indigo-500/10' : 'bg-emerald-100 dark:bg-emerald-500/10'}`}>
+                 <Sparkles className={`w-8 h-8 ${selectedModel === MODELS.PRO.id ? 'text-indigo-500' : 'text-emerald-500'}`} />
                </div>
-               <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-8">How can I help you today?</h2>
+               <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-2">
+                 How can I help you today?
+               </h2>
+               <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
+                 Using {selectedModelInfo?.name}
+               </p>
                
                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl w-full px-4">
                   {[

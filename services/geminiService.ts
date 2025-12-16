@@ -1,19 +1,32 @@
-import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
+import { GoogleGenAI, Chat, GenerateContentResponse, Content, Part } from "@google/genai";
+import { Message, Role } from '../types';
 
 // Models
-// Using gemini-2.5-flash for the fastest response times
-const CHAT_MODEL = 'gemini-2.5-flash';
-const IMAGE_MODEL = 'gemini-2.5-flash-image';
+// Note: 'gemini-2.5-flash-lite' is not a valid model ID currently.
+// We use 'gemini-2.5-flash' for high speed/low latency (Flash).
+// We use 'gemini-3-pro-preview' for high intelligence (Pro).
+export const MODELS = {
+  FLASH_LITE: {
+    id: 'gemini-2.5-flash', // Using the valid 2.5 Flash model
+    name: 'Gemini 2.5 Flash',
+    description: 'Fastest · Low Latency',
+  },
+  PRO: {
+    id: 'gemini-3-pro-preview',
+    name: 'Gemini 3 Pro',
+    description: 'Smartest · Reasoning',
+  },
+  IMAGE_GEN: 'gemini-2.5-flash-image'
+};
 
 let aiInstance: GoogleGenAI | null = null;
 
-// Lazy initialization to prevent app crash on load if API key is missing
+// Lazy initialization
 const getAiClient = (): GoogleGenAI => {
   if (!aiInstance) {
     const apiKey = process.env.API_KEY;
     if (!apiKey) {
-      // This error will now be caught by the UI and shown to the user
-      throw new Error("API key is missing. Please set the API_KEY environment variable in Vercel.");
+      throw new Error("API key is missing. Please set the API_KEY environment variable.");
     }
     aiInstance = new GoogleGenAI({ apiKey: apiKey });
   }
@@ -21,15 +34,41 @@ const getAiClient = (): GoogleGenAI => {
 };
 
 /**
- * Creates a new chat session with system instructions.
+ * Converts internal Message format to Gemini API Content format for history.
  */
-export const createChatSession = (): Chat => {
+const formatHistory = (messages: Message[]): Content[] => {
+  return messages
+    .filter(m => !m.error && !m.isStreaming) // Filter out error/temporary messages
+    .map(m => {
+      const parts: Part[] = [{ text: m.content }];
+      
+      // Note: In a real app, you might re-upload images or manage tokens, 
+      // but for simple text history context, we focus on the text part 
+      // or simplistic image handling if needed. 
+      // Sending base64 in history for every turn can be heavy, 
+      // so this implementation focuses on text context for history 
+      // unless it's the immediate prompt.
+      
+      return {
+        role: m.role,
+        parts: parts
+      };
+    });
+};
+
+/**
+ * Creates a new chat session, optionally with history.
+ */
+export const createChatSession = (modelId: string = MODELS.FLASH_LITE.id, historyMessages: Message[] = []): Chat => {
   const ai = getAiClient();
+  
+  const history = formatHistory(historyMessages);
+
   return ai.chats.create({
-    model: CHAT_MODEL,
+    model: modelId,
+    history: history,
     config: {
       systemInstruction: "You are Textra AI, a helpful, intelligent, and knowledgeable AI assistant. You provide clear, concise, and accurate answers using Markdown formatting.",
-      // Explicitly disable thinking to improve latency/speed
       thinkingConfig: { thinkingBudget: 0 }
     },
   });
@@ -41,7 +80,7 @@ export const createChatSession = (): Chat => {
 export const generateImageEdit = async (prompt: string, imageBase64: string, mimeType: string): Promise<GenerateContentResponse> => {
   const ai = getAiClient();
   return await ai.models.generateContent({
-    model: IMAGE_MODEL,
+    model: MODELS.IMAGE_GEN,
     contents: {
       parts: [
         {

@@ -1,7 +1,7 @@
 import React, { useState, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Role, Message } from '../types';
-import { User, Bot, Copy, Check, AlertCircle } from 'lucide-react';
+import { User, Sparkles, Copy, Check, AlertCircle } from 'lucide-react';
 
 interface MessageBubbleProps {
   message: Message;
@@ -64,13 +64,15 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         
         {/* Avatar */}
         <div className="flex-shrink-0 flex flex-col relative">
-          <div className={`w-8 h-8 rounded-sm flex items-center justify-center shadow-sm ${
-            isUser ? 'bg-indigo-500' : 'bg-primary-500'
+          <div className={`w-8 h-8 rounded-md flex items-center justify-center shadow-sm ${
+            isUser 
+              ? 'bg-gradient-to-br from-indigo-500 to-purple-600' 
+              : 'bg-gradient-to-br from-emerald-400 to-cyan-600'
           } ${!isUser && message.isStreaming ? 'animate-pulse' : ''}`}>
             {isUser ? (
               <User className="w-5 h-5 text-white" />
             ) : (
-              <Bot className="w-5 h-5 text-white" />
+              <Sparkles className="w-5 h-5 text-white fill-white/20" />
             )}
           </div>
         </div>
