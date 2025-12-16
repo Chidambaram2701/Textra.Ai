@@ -6,8 +6,10 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     define: {
-      // This exposes the process.env.API_KEY to the client-side code during build
-      'process.env.API_KEY': JSON.stringify(env.API_KEY || process.env.API_KEY)
+      // Prevents "ReferenceError: process is not defined"
+      'process.env': {},
+      // Safely exposes the API_KEY, defaulting to an empty string if missing to avoid crashes
+      'process.env.API_KEY': JSON.stringify(env.API_KEY || '')
     }
   };
 });
