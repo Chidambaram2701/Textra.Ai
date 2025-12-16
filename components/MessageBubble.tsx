@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Role, Message } from '../types';
 import { User, Bot, Copy, Check, AlertCircle } from 'lucide-react';
@@ -158,4 +158,5 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   );
 };
 
-export default MessageBubble;
+// Use memo to optimize performance
+export default memo(MessageBubble);

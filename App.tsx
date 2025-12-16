@@ -256,6 +256,9 @@ const App: React.FC = () => {
         const resultStream = await chatSessionRef.current.sendMessageStream({ message: text });
         
         let fullContent = '';
+        let lastUpdateTime = 0;
+        // Throttle updates to ~25fps (40ms) to keep UI buttery smooth
+        const UPDATE_INTERVAL = 40; 
 
         for await (const chunk of resultStream) {
           const c = chunk as GenerateContentResponse;
@@ -263,19 +266,24 @@ const App: React.FC = () => {
           
           if (chunkText) {
             fullContent += chunkText;
-            // Streaming Update
-            setSessions(prev => prev.map(session => 
-              session.id === currentSessionId 
-                ? { 
-                    ...session, 
-                    messages: session.messages.map(m => m.id === botMessageId ? { ...m, content: fullContent } : m) 
-                  } 
-                : session
-            ));
+            const now = Date.now();
+
+            // Only update React state if enough time has passed
+            if (now - lastUpdateTime >= UPDATE_INTERVAL) {
+               setSessions(prev => prev.map(session => 
+                 session.id === currentSessionId 
+                   ? { 
+                       ...session, 
+                       messages: session.messages.map(m => m.id === botMessageId ? { ...m, content: fullContent } : m) 
+                     } 
+                   : session
+               ));
+               lastUpdateTime = now;
+            }
           }
         }
 
-        // Finalize Streaming State
+        // Finalize Streaming State (Guaranteed final update)
         setSessions(prev => prev.map(session => 
           session.id === currentSessionId 
             ? { 
