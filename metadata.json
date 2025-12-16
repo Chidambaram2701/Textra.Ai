@@ -1,0 +1,5 @@
+{
+  "name": "Textra AI",
+  "description": "A modern, responsive AI chat application powered by Google Gemini, featuring a ChatGPT-inspired dark UI, Markdown support, and real-time streaming responses.",
+  "requestFramePermissions": []
+}
