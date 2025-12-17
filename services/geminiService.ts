@@ -32,28 +32,35 @@ export const MODELS = {
 };
 
 /**
- * Safely retrieves the Gemini API Key. 
+ * Safely retrieves the Gemini API Key from the environment.
  */
 const getApiKey = (): string => {
   const envKey = process.env.API_KEY;
-  if (envKey && envKey !== 'undefined' && envKey !== '' && !envKey.startsWith('YOUR_API')) {
-    return envKey;
+  if (!envKey || envKey === 'undefined' || envKey === '') {
+    // In a real production environment, this should be handled by the UI 
+    // or by ensuring the environment variable is correctly set.
+    return '';
   }
-  return 'AIzaSyDTNzmXXVEnblV5CCnq_UYcNMCWeZTLt14';
+  return envKey;
 };
 
 /**
- * Safely retrieves the DeepSeek API Key.
+ * Safely retrieves the DeepSeek API Key from the environment.
  */
 const getDeepSeekKey = (): string => {
-  return process.env.DEEPSEEK_API_KEY || '';
+  const envKey = process.env.DEEPSEEK_API_KEY;
+  if (!envKey || envKey === 'undefined' || envKey === '') {
+    return '';
+  }
+  return envKey;
 };
 
 let aiInstance: GoogleGenAI | null = null;
 
 const getAiClient = (): GoogleGenAI => {
+  const apiKey = getApiKey();
   if (!aiInstance) {
-    aiInstance = new GoogleGenAI({ apiKey: getApiKey() });
+    aiInstance = new GoogleGenAI({ apiKey });
   }
   return aiInstance;
 };
@@ -92,6 +99,8 @@ export const createChatSession = (modelId: string = MODELS.FLASH.id, historyMess
  */
 export async function* streamDeepSeekChat(modelId: string, messages: Message[]) {
   const apiKey = getDeepSeekKey();
+  if (!apiKey) throw new Error('DeepSeek API Key is not configured.');
+
   const formattedMessages = messages.map(m => ({
     role: m.role === Role.USER ? 'user' : 'assistant',
     content: m.content
