@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Chat, GenerateContentResponse } from "@google/genai";
 import { Message, Role, ChatSession } from './types';
 import { createChatSession, generateImageEdit, MODELS } from './services/geminiService';
+import { useUIStore } from './store/uiStore';
 import MessageBubble from './components/MessageBubble';
 import InputArea from './components/InputArea';
 import { Sparkles, Menu, Plus, MessageSquare, Search, Trash2, X, Sun, Moon, Eraser, Copy, Check, ChevronDown, Zap, BrainCircuit } from 'lucide-react';
@@ -17,17 +18,19 @@ const fileToBase64 = (file: File): Promise<string> => {
 };
 
 const App: React.FC = () => {
+  // Global UI Store
+  const { isSidebarOpen, openSidebar, closeSidebar } = useUIStore();
+
   // State
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [isChatCopied, setIsChatCopied] = useState(false);
   
-  // Model Selection State
-  const [selectedModel, setSelectedModel] = useState<string>(MODELS.FLASH_LITE.id);
+  // Model Selection State - Defaulting to Gemini 3 Flash
+  const [selectedModel, setSelectedModel] = useState<string>(MODELS.FLASH.id);
   const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
   
   // Refs
@@ -121,14 +124,14 @@ const App: React.FC = () => {
     };
     setSessions(prev => [newSession, ...prev]);
     setCurrentSessionId(newSession.id);
-    setSidebarOpen(false);
+    closeSidebar();
     setSearchQuery('');
   };
 
   // Switch session
   const switchSession = (sessionId: string) => {
     setCurrentSessionId(sessionId);
-    setSidebarOpen(false);
+    closeSidebar();
   };
 
   const deleteSession = (e: React.MouseEvent, sessionId: string) => {
@@ -320,7 +323,7 @@ const App: React.FC = () => {
         } else if (error.message.includes('403')) {
           errorMessageText = "Error 403: Permission denied. Please check your permissions.";
         } else if (error.message.includes('404')) {
-          errorMessageText = `Error 404: The selected model (${selectedModel}) was not found. It might not be available in your region yet.`;
+          errorMessageText = `Error 404: The selected model (${selectedModel}) was not found.`;
         } else if (error.message.includes('429')) {
           errorMessageText = "Error 429: Usage limit exceeded. Please try again later.";
         } else {
@@ -355,7 +358,7 @@ const App: React.FC = () => {
     session.messages.some(m => m.content.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const selectedModelInfo = Object.values(MODELS).find(m => typeof m === 'object' && m.id === selectedModel) as typeof MODELS.FLASH_LITE;
+  const selectedModelInfo = Object.values(MODELS).find(m => typeof m === 'object' && m.id === selectedModel) as typeof MODELS.FLASH;
 
   return (
     <div className="flex h-[100dvh] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 overflow-hidden font-sans transition-colors duration-200">
@@ -364,7 +367,7 @@ const App: React.FC = () => {
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 bg-gray-500/50 backdrop-blur-sm z-30 md:hidden"
-          onClick={() => setSidebarOpen(false)}
+          onClick={closeSidebar}
         />
       )}
 
@@ -479,7 +482,7 @@ const App: React.FC = () => {
         <header className="flex-shrink-0 relative z-20 flex items-center justify-between p-3 border-b border-gray-200 dark:border-white/5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md text-gray-700 dark:text-gray-200 shadow-sm">
             <div className="flex items-center gap-2 overflow-visible relative">
                 <button 
-                  onClick={() => setSidebarOpen(true)} 
+                  onClick={openSidebar} 
                   className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md md:hidden flex-shrink-0"
                 >
                     <Menu className="w-5 h-5" />
@@ -504,7 +507,7 @@ const App: React.FC = () => {
                           </span>
                           {/* Mobile Short Label */}
                           <span className="text-xs md:hidden">
-                            {selectedModel === MODELS.FLASH_LITE.id ? 'Lite' : 'Pro'}
+                            {selectedModel === MODELS.FLASH.id ? 'Flash' : 'Pro'}
                           </span>
                           <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isModelMenuOpen ? 'rotate-180' : ''}`} />
                       </div>
@@ -521,9 +524,9 @@ const App: React.FC = () => {
                         <div className="p-1.5 space-y-0.5">
                            {/* Flash Option */}
                            <button
-                             onClick={() => handleModelSelect(MODELS.FLASH_LITE.id)}
+                             onClick={() => handleModelSelect(MODELS.FLASH.id)}
                              className={`w-full text-left p-3 rounded-md flex items-start gap-3 transition-colors ${
-                               selectedModel === MODELS.FLASH_LITE.id 
+                               selectedModel === MODELS.FLASH.id 
                                  ? 'bg-gray-100 dark:bg-white/10' 
                                  : 'hover:bg-gray-50 dark:hover:bg-white/5'
                              }`}
@@ -533,13 +536,13 @@ const App: React.FC = () => {
                               </div>
                               <div>
                                 <div className="font-medium text-sm text-gray-900 dark:text-gray-100">
-                                  {MODELS.FLASH_LITE.name}
+                                  {MODELS.FLASH.name}
                                 </div>
                                 <div className="text-xs text-gray-500 dark:text-gray-400">
-                                  {MODELS.FLASH_LITE.description}
+                                  {MODELS.FLASH.description}
                                 </div>
                               </div>
-                              {selectedModel === MODELS.FLASH_LITE.id && <Check className="w-4 h-4 text-emerald-500 ml-auto mt-1" />}
+                              {selectedModel === MODELS.FLASH.id && <Check className="w-4 h-4 text-emerald-500 ml-auto mt-1" />}
                            </button>
 
                            {/* Pro Option */}

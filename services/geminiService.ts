@@ -2,13 +2,11 @@ import { GoogleGenAI, Chat, GenerateContentResponse, Content, Part } from "@goog
 import { Message, Role } from '../types';
 
 // Models
-// Note: 'gemini-2.5-flash-lite' is not a valid model ID currently.
-// We use 'gemini-2.5-flash' for high speed/low latency (Flash).
-// We use 'gemini-3-pro-preview' for high intelligence (Pro).
+// Following standard Gemini API model naming conventions
 export const MODELS = {
-  FLASH_LITE: {
-    id: 'gemini-2.5-flash', // Using the valid 2.5 Flash model
-    name: 'Gemini 2.5 Flash',
+  FLASH: {
+    id: 'gemini-3-flash-preview',
+    name: 'Gemini 3 Flash',
     description: 'Fastest · Low Latency',
   },
   PRO: {
@@ -24,12 +22,11 @@ let aiInstance: GoogleGenAI | null = null;
 // Lazy initialization
 const getAiClient = (): GoogleGenAI => {
   if (!aiInstance) {
-    // Attempt to get key from environment, fallback to hardcoded key if env var replacement fails
-    // This ensures the app works immediately for the user
-    const apiKey = process.env.API_KEY || "AIzaSyDTNzmXXVEnblV5CCnq_UYcNMCWeZTLt14";
+    // API key is injected by Vite's define block or taken from process.env
+    const apiKey = process.env.API_KEY;
     
     if (!apiKey) {
-      throw new Error("API key is missing. Please set the API_KEY environment variable.");
+      throw new Error("API key is missing. Ensure the API_KEY is provided via environment variables.");
     }
     aiInstance = new GoogleGenAI({ apiKey: apiKey });
   }
@@ -55,7 +52,7 @@ const formatHistory = (messages: Message[]): Content[] => {
 /**
  * Creates a new chat session, optionally with history.
  */
-export const createChatSession = (modelId: string = MODELS.FLASH_LITE.id, historyMessages: Message[] = []): Chat => {
+export const createChatSession = (modelId: string = MODELS.FLASH.id, historyMessages: Message[] = []): Chat => {
   const ai = getAiClient();
   
   const history = formatHistory(historyMessages);

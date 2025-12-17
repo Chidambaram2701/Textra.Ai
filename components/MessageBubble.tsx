@@ -68,11 +68,11 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             isUser 
               ? 'bg-gradient-to-br from-indigo-500 to-purple-600' 
               : 'bg-gradient-to-br from-emerald-400 to-cyan-600'
-          } ${!isUser && message.isStreaming ? 'animate-pulse' : ''}`}>
+          }`}>
             {isUser ? (
               <User className="w-5 h-5 text-white" />
             ) : (
-              <Sparkles className="w-5 h-5 text-white fill-white/20" />
+              <Sparkles className={`w-5 h-5 text-white fill-white/20 ${!isUser && message.isStreaming ? 'animate-pulse-slow' : ''}`} />
             )}
           </div>
         </div>
