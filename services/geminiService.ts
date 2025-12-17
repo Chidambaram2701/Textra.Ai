@@ -2,7 +2,6 @@ import { GoogleGenAI, Chat, GenerateContentResponse, Content, Part } from "@goog
 import { Message, Role } from '../types';
 
 // Models
-// Following standard Gemini API model naming conventions
 export const MODELS = {
   FLASH: {
     id: 'gemini-3-flash-preview',
@@ -17,58 +16,59 @@ export const MODELS = {
   IMAGE_GEN: 'gemini-2.5-flash-image'
 };
 
+/**
+ * Safely retrieves the API Key. 
+ */
+const getApiKey = (): string => {
+  const key = process.env.API_KEY;
+  // Handle empty or placeholder strings that might be injected during build
+  if (!key || key === 'undefined' || key.trim() === '' || key.startsWith('YOUR_API')) {
+    console.error("Critical: API Key is missing from the environment.");
+    throw new Error("API Key is missing. Please ensure API_KEY is set in your deployment environment variables.");
+  }
+  return key;
+};
+
 let aiInstance: GoogleGenAI | null = null;
 
-// Lazy initialization
 const getAiClient = (): GoogleGenAI => {
   if (!aiInstance) {
-    // API key is injected by Vite's define block or taken from process.env
-    const apiKey = process.env.API_KEY;
-    
-    if (!apiKey) {
-      throw new Error("API key is missing. Ensure the API_KEY is provided via environment variables.");
-    }
-    aiInstance = new GoogleGenAI({ apiKey: apiKey });
+    aiInstance = new GoogleGenAI({ apiKey: getApiKey() });
   }
   return aiInstance;
 };
 
 /**
- * Converts internal Message format to Gemini API Content format for history.
+ * Converts messages to Gemini API format.
  */
 const formatHistory = (messages: Message[]): Content[] => {
   return messages
-    .filter(m => !m.error && !m.isStreaming) // Filter out error/temporary messages
-    .map(m => {
-      const parts: Part[] = [{ text: m.content }];
-      
-      return {
-        role: m.role,
-        parts: parts
-      };
-    });
+    .filter(m => !m.error && !m.isStreaming)
+    .map(m => ({
+      role: m.role,
+      parts: [{ text: m.content }]
+    }));
 };
 
 /**
- * Creates a new chat session, optionally with history.
+ * Initializes a new chat session.
  */
 export const createChatSession = (modelId: string = MODELS.FLASH.id, historyMessages: Message[] = []): Chat => {
   const ai = getAiClient();
-  
   const history = formatHistory(historyMessages);
 
   return ai.chats.create({
     model: modelId,
     history: history,
     config: {
-      systemInstruction: "You are Textra AI, a helpful, intelligent, and knowledgeable AI assistant. You provide clear, concise, and accurate answers using Markdown formatting.",
+      systemInstruction: "You are Textra AI, a powerful and helpful assistant. Provide clear, accurate, and detailed responses using Markdown formatting. Maintain a professional yet friendly tone.",
       thinkingConfig: { thinkingBudget: 0 }
     },
   });
 };
 
 /**
- * Generates content based on an image and text prompt using the image model.
+ * Handles image editing/prompting.
  */
 export const generateImageEdit = async (prompt: string, imageBase64: string, mimeType: string): Promise<GenerateContentResponse> => {
   const ai = getAiClient();

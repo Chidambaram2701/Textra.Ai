@@ -3,10 +3,11 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, (process as any).cwd(), '');
-  const apiKey = env.API_KEY || 'AIzaSyDTNzmXXVEnblV5CCnq_UYcNMCWeZTLt14';
+  
+  // Logic: Check .env file, then System Env (Vercel), then fallback to hardcoded
+  const apiKey = env.API_KEY || (process as any).env.API_KEY || 'AIzaSyDTNzmXXVEnblV5CCnq_UYcNMCWeZTLt14';
 
   return {
-    // Using relative base path allows the app to be deployed anywhere (Vercel or GitHub Pages)
     base: './', 
     plugins: [react()],
     define: {
