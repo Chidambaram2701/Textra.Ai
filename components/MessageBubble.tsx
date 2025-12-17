@@ -1,7 +1,8 @@
+
 import React, { useState, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Role, Message } from '../types';
-import { User, Sparkles, Copy, Check, AlertCircle } from 'lucide-react';
+import { User, Sparkles, Copy, Check, AlertCircle, Brain } from 'lucide-react';
 
 interface MessageBubbleProps {
   message: Message;
@@ -45,6 +46,7 @@ const CodeBlock = ({ language, children }: { language: string | undefined, child
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const isUser = message.role === Role.USER;
   const [messageCopied, setMessageCopied] = useState(false);
+  const [showReasoning, setShowReasoning] = useState(true);
 
   const handleCopyMessage = async () => {
     try {
@@ -79,12 +81,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
         {/* Content Area */}
         <div className="relative flex-1 overflow-hidden min-w-0">
-          {/* Header (Mobile mostly) */}
           <div className="font-bold text-sm text-gray-800 dark:text-gray-100 mb-1 opacity-90 select-none">
             {isUser ? 'You' : 'Textra AI'}
           </div>
 
-          {/* Image Attachment (if any) */}
           {message.image && (
             <div className="mb-4 mt-2">
               <img 
@@ -96,7 +96,25 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             </div>
           )}
 
-          {/* Markdown Content */}
+          {/* Reasoning / Thinking Block */}
+          {message.reasoning && (
+            <div className="mb-4 border-l-2 border-indigo-500/30 pl-4 py-1">
+              <button 
+                onClick={() => setShowReasoning(!showReasoning)}
+                className="flex items-center gap-2 text-xs font-medium text-indigo-500 hover:text-indigo-400 transition-colors mb-2 uppercase tracking-wider"
+              >
+                <Brain className="w-3.5 h-3.5" />
+                {showReasoning ? 'Thinking Process' : 'Thinking Process (Hidden)'}
+              </button>
+              {showReasoning && (
+                <div className="text-sm text-gray-500 dark:text-gray-400 italic font-serif leading-relaxed">
+                  {message.reasoning}
+                  {message.isStreaming && !message.content && <span className="inline-block w-1.5 h-3.5 bg-indigo-300 ml-1 animate-pulse" />}
+                </div>
+              )}
+            </div>
+          )}
+
           {message.content && (
             <div className={`prose dark:prose-invert max-w-none text-[15px] md:text-base leading-7 text-gray-800 dark:text-gray-100 ${message.error ? 'text-red-500 dark:text-red-400' : ''}`}>
                {message.error ? (
@@ -132,7 +150,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                       ),
                     }}
                   >
-                    {/* Append blinking cursor during streaming */}
                     {message.content + (message.isStreaming ? ' ' : '')}
                   </ReactMarkdown>
                )}
@@ -160,5 +177,4 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   );
 };
 
-// Use memo to optimize performance
 export default memo(MessageBubble);

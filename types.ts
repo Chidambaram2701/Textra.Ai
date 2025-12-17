@@ -1,3 +1,4 @@
+
 export enum Role {
   USER = 'user',
   MODEL = 'model',
@@ -7,6 +8,7 @@ export interface Message {
   id: string;
   role: Role;
   content: string;
+  reasoning?: string; // For models like DeepSeek-R1
   image?: string; // Data URL for the image
   isStreaming?: boolean;
   timestamp: number;
