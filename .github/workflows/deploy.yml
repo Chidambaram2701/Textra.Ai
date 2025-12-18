@@ -1,0 +1,33 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    concurrency: ci-${{ github.ref }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install and Build
+        run: |
+          npm install
+          npm run build
+        env:
+           # If you have API keys that need to be bundled, add them to GitHub Secrets
+           # and expose them here, e.g.:
+           # API_KEY: ${{ secrets.API_KEY }}
+           CI: false
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
