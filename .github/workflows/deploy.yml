@@ -35,7 +35,8 @@ jobs:
         env:
            # If you have API keys that need to be bundled, add them to GitHub Secrets
            # and expose them here, e.g.:
-           # API_KEY: ${{ secrets.API_KEY }}
+           API_KEY: ${{ secrets.API_KEY }}
+           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
            CI: false
            
       - name: Setup Pages
