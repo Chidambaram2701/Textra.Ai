@@ -1,20 +1,72 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# 🚀 Textra.Ai
 
-# Run and deploy your AI Studio app
+A modern AI-powered text assistant built with React and TypeScript to help generate, enhance, and manage text using advanced AI models.
 
-This contains everything you need to run your app locally.
+## 🌐 Live Demo
 
-View your app in AI Studio: https://ai.studio/apps/drive/1eqR7xsTIrikDcgQnevZvrgtquN9LCqOy
+➡️ https://textra-ai.vercel.app
 
-## Run Locally
+## 📌 About
 
-**Prerequisites:**  Node.js
+Textra.Ai is a web app that lets users generate and improve text using AI. It provides a simple, clean interface and integrates advanced AI features to make writing faster and easier.
+
+## 🛠️ Features
+
+- AI-based text generation  
+- Easy to use interface  
+- Built with React and TypeScript  
+- Fast local development using Vite
+
+## 📦 Technologies Used
+
+- React  
+- TypeScript  
+- Vite  
+- AI / OpenAI or Gemini API
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+Make sure you have **Node.js** installed.
+
+### Steps
+
+1. Clone the project:
+```bash
+git clone https://github.com/Chidambaram2701/Textra.Ai.git
 
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Navigate into the folder:
+
+cd Textra.Ai
+
+
+Install dependencies:
+
+npm install
+
+
+Create .env.local and add:
+
+GEMINI_API_KEY=your_api_key_here
+
+
+Start the app:
+
+npm run dev
+
+📁 Project Structure
+Textra.Ai/
+├── components/
+├── services/
+├── store/
+├── App.tsx
+├── index.tsx
+├── package.json
+├── tsconfig.json
+└── README.md
+
+📫 Contact
+
+GitHub: https://github.com/Chidambaram2701
