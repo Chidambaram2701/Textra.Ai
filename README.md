@@ -4,7 +4,7 @@ A modern AI-powered text assistant built with React and TypeScript to help gener
 
 ## 🌐 Live Demo
 
-➡️ https://textra-ai.vercel.app
+➡️ [https://textra-ai.vercel.app](https://chidambaram2701.github.io/Textra.Ai/)
 
 ## 📌 About
 
