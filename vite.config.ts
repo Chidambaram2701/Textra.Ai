@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
   const deepseekApiKey = env.DEEPSEEK_API_KEY || (process as any).env.DEEPSEEK_API_KEY;
 
   return {
-    base: '/Textra.Ai/', 
+    base: '/', 
     plugins: [react()],
     define: {
       'process.env.API_KEY': JSON.stringify(apiKey),
